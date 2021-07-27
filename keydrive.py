@@ -37,23 +37,30 @@ if __name__ == '__main__':
     tty.setcbreak(sys.stdin.fileno())
     rate = rospy.Rate(100)
     last_auto_pub_time = rospy.Time.now()
-    max_pub_interval = rospy.Duration(0.2)
+    max_pub_interval = rospy.Duration(0.1)
     while not rospy.is_shutdown():
         t = rospy.Time.now()
         if t - last_auto_pub_time > max_pub_interval:
-            print('auto pub: ' + str(last_twist.linear.x) + ' ' + str(last_twist.angular.z))
+            #print('auto pub: ' + str(last_twist.linear.x) + ' ' + str(last_twist.angular.z))
             twist_pub.publish(last_twist)
             last_auto_pub_time = t
 
         rate.sleep()
         if select.select([sys.stdin], [], [], 0)[0] == [sys.stdin]:
             key = sys.stdin.read(1)
-            print('key: ' + key)
+            #print('key: ' + key)
             if len(key) == 1 and key[0] in key_mapping:
                 vels = key_mapping[key[0]]
                 last_twist.angular.z = vels[0] * vel_scales[0]
                 last_twist.linear.x  = vels[1] * vel_scales[1]
                 twist_pub.publish(last_twist)
+
+    print('sending (0, 0) velocities...')
+    last_twist.angular.z = 0
+    last_twist.linear.x = 0
+    twist_pub.publish(last_twist)
+
+    rospy.sleep(0.5)
 
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_attr)
 
